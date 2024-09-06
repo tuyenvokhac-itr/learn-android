@@ -63,16 +63,18 @@ class MainActivity : ComponentActivity() {
 
     private fun initBle(context: Context) {
         val bleManager = BioRingManager(context)
-        bleManager.listenBleState(object : BluetoothStateListener {
-            override fun onBluetoothOn() {
-                Log.d(TAG, "onBluetoothOn: ")
-            }
-
-            override fun onBluetoothOff() {
-                Log.d(TAG, "onBluetoothOff: ")
-            }
-        })
+        bleManager.listenBleState(bleStateListener)
         Log.d(TAG, "initBle: ${bleManager.isBleEnabled()}")
+    }
+
+    private val bleStateListener = object : BluetoothStateListener {
+        override fun onBluetoothOn() {
+            Log.d(TAG, "onBluetoothOn: ")
+        }
+
+        override fun onBluetoothOff() {
+            Log.d(TAG, "onBluetoothOff: ")
+        }
     }
 }
 

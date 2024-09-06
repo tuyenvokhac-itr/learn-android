@@ -1,6 +1,8 @@
 package com.example.composablelearning
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
@@ -30,6 +32,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.composablelearning.blecore.BioRingManager
+import com.example.composablelearning.blecore.ble.BluetoothStateListener
 import com.example.composablelearning.ui.theme.ComposableLearningTheme
 
 private val TAG: String = "MainActivity"
@@ -45,12 +49,33 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    MessageCard(Message("Name", "abc dasda asdas d adasdas adasdasd asdasdasddasdasdasda adasdasd adasda adadasdasad adasd"))
+                    MessageCard(
+                        Message(
+                            "Name",
+                            "abc dasda asdas d adasdas adasdasd asdasdasddasdasdasda adasdasd adasda adadasdasad adasd"
+                        )
+                    )
                 }
             }
         }
+        initBle(this)
+    }
+
+    private fun initBle(context: Context) {
+        val bleManager = BioRingManager(context)
+        bleManager.listenBleState(object : BluetoothStateListener {
+            override fun onBluetoothOn() {
+                Log.d(TAG, "onBluetoothOn: ")
+            }
+
+            override fun onBluetoothOff() {
+                Log.d(TAG, "onBluetoothOff: ")
+            }
+        })
+        Log.d(TAG, "initBle: ${bleManager.isBleEnabled()}")
     }
 }
+
 
 @Composable
 fun MessageCard(msg: Message) {
@@ -71,6 +96,7 @@ fun MessageCard(msg: Message) {
         // surfaceColor will be updated gradually from one color to the other
         val surfaceColor by animateColorAsState(
             if (isExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            label = "",
         )
 
         // We toggle the isExpanded variable when we click on this Column
@@ -89,7 +115,9 @@ fun MessageCard(msg: Message) {
                 // surfaceColor color will be changing gradually from primary to surface
                 color = surfaceColor,
                 // animateContentSize will change the Surface size gradually
-                modifier = Modifier.animateContentSize().padding(1.dp)
+                modifier = Modifier
+                    .animateContentSize()
+                    .padding(1.dp)
             ) {
                 Text(
                     text = msg.body,
@@ -102,6 +130,12 @@ fun MessageCard(msg: Message) {
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun PreviewMessageCard() {
+    MessageCard(Message(author = "Tuyen", body = "Tam the"))
 }
 
 data class Message(val author: String, val body: String)

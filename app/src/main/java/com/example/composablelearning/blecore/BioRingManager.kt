@@ -5,6 +5,9 @@ import android.util.Log
 import com.example.composablelearning.blecore.ble.BleStateController
 import com.example.composablelearning.blecore.ble.BluetoothStateListener
 
+/** This class is used for testing
+ *
+ */
 class BioRingManager(private val context: Context) {
     private val TAG: String = "BioRingManager"
     fun isBleEnabled() : Boolean {

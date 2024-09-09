@@ -1,0 +1,324 @@
+/**
+ * @file       brp.proto
+ * @copyright  Copyright (C) 2023 ITR VN. All rights reserved.
+ * @license    This project is released under the ITR VN License.
+ * @version    1.0.0
+ * @date
+ * @author
+ * @brief      BioRing Protocol (BRP) definitions.
+ * @note       Style guide: https://protobuf.dev/programming-guides/style/
+ * @note       Proto 2 guide: https://protobuf.dev/programming-guides/proto2/
+ * @note       Proto 3 guide: https://protobuf.dev/programming-guides/proto3/
+ */
+
+syntax = "proto2";
+package BRP;
+
+option java_package = "com.example.composablelearning.blecore";
+option java_outer_classname = "BioRingProto";
+/* Import ------------------------------------------------------------------- */
+
+/* Messages ----------------------------------------------------------------- */
+
+message ProtocolInfo {
+  required int32 version = 1 [ default = 1 ];
+}
+
+message Packet {
+  /* Session ID: timestamp of the message. Format: Unix epoch in ms.
+     In case of ACK packet, it is the session ID of the packet being ACKed.
+   */
+  required uint64 sid = 1;
+  // Packet type: used to differentiate between packets.
+  required PacketType type = 2;
+
+  // Payload. Used to store the message's additional data.
+  oneof payload {
+    CommandPacket command = 3;  // App -> Device
+    ResponsePacket response = 4;  // Device -> App
+    NotificationPacket notification = 5;  // Device -> App
+    AckPacket ack = 6;  // App -> Device
+  }
+}
+
+enum PacketType {
+  PACKET_TYPE_UNSPECIFIED = 0;
+  PACKET_TYPE_COMMAND = 1;
+  PACKET_TYPE_RESPONSE = 2;
+  PACKET_TYPE_NOTIFICATION = 3;
+  PACKET_TYPE_ACK = 4;
+}
+
+enum SensorType {
+  SENSOR_TYPE_PPG = 1;
+  SENSOR_TYPE_ECG = 2;
+  SENSOR_TYPE_IMU = 4;
+  SENSOR_TYPE_TEMP = 8;
+}
+
+/* Command message format */
+message CommandPacket {
+  required CommandId cid = 1;
+  oneof payload {
+    CmdMemSet mem_set = 2; // CID_MEM_SET
+    CmdMemGet mem_get = 3; // CID_MEM_GET
+    AfeSettings afe_setting = 4; // CID_AFE_SENSOR_SETTING_SET
+    WlcRunParams wlc_run_params = 5; // CID_WLC_RUN_PARAMS_SET
+    WlcOemParams wlc_oem_params = 6; // CID_WLC_OEM_PARAMS_SET
+    uint32 sensor_type = 7; // CID_STREAMING_DATA_START. value: see @SensorType
+  }
+}
+
+/* Response message format */
+message ResponsePacket {
+  // Command ID. This field is used to match the response with the command.
+  required CommandId cid = 1;
+
+  // Response code. Used to indicate the result of the command.
+  required ResponseCode result = 2;
+
+  // Payload. Used to store the response additional data.
+  oneof payload {
+    ProtocolInfo protocol_info = 4; // CID_PROTOCOL_INFO_GET
+    RspMemGet mem_get = 5; // CID_MEM_GET
+    DevInfo dev_info = 6; // CID_DEV_INFO_GET
+    AfeSettings afe_setting = 7; // CID_AFE_SENSOR_SETTING_GET
+    WlcRunParams wlc_run_params = 8; // CID_WLC_RUN_PARAMS_GET
+    WlcOemParams wlc_oem_params = 9; // CID_WLC_OEM_PARAMS_GET
+  }
+}
+
+/* Notification message format */
+message NotificationPacket {
+  // Notification ID. Used to differentiate between notifications.
+  required NotificationId nid = 2;
+
+  /* ACK:
+   *
+   * - `true`: require ACK
+   * - `false`: not require ACK
+   */
+  required bool ack = 3;
+
+  // Payload. Used to store the notification additional data.
+  oneof payload {
+    NotiLog log = 4; // NID_LOG_DATA
+    bool charging = 5; // NID_CHARGING_STATUS_CHANGED
+    uint32 battery_level = 6; // NID_BATTERY_LEVEL_CHANGED
+  }
+}
+
+/* ACK message format */
+message AckPacket {
+  // Notification ID. Used to differentiate between notifications.
+  required NotificationId nid = 1;
+  required AckResponseCode result = 2;
+}
+
+enum CommandId {
+  // Unspecified packet to be ignored
+  CID_UNSPECIFIED = 0;
+
+  // Get protocol info
+  CID_PROTOCOL_INFO_GET = 1;
+
+  // For V&V: Set memory content.
+  CID_MEM_SET = 2;
+
+  // For V&V: Get memory content
+  CID_MEM_GET = 3;
+
+  // Restart device
+  CID_REBOOT = 4;
+
+  // Set time to device
+  CID_TIME_SET = 5;
+
+  // Get time from device
+  CID_TIME_GET = 6;
+
+  // Get device info
+  CID_DEV_INFO_GET = 7;
+
+  // Get device status
+  CID_DEV_STATUS_GET = 8;
+
+  // Set device configuration
+  CID_DEV_CONFIG_SET = 9;
+
+  // Get device configuration
+  CID_DEV_CONFIG_GET = 10;
+
+  // Enter DFU mode
+  CID_DFU_ENTER = 11;
+
+  // Set data logging config
+  CID_STREAMING_DATA_START = 12;
+
+  // Get data logging config
+  CID_STREAMING_DATA_STOP = 13;
+
+  // Set AFE sensor settings
+  CID_AFE_SENSOR_SETTING_SET = 14;
+
+  // Get AFE sensor settings
+  CID_AFE_SENSOR_SETTING_GET = 15;
+
+  // Set Wireless Charger runtimes params
+  CID_WLC_RUN_PARAMS_SET = 16;
+
+  // Get Wireless Charger runtimes params
+  CID_WLC_RUN_PARAMS_GET = 17;
+
+  // Set Wireless Charger OEM params
+  CID_WLC_OEM_PARAMS_SET = 18;
+
+  // Get Wireless Charger OEM params
+  CID_WLC_OEM_PARAMS_GET = 19;
+
+  // Set device to Sleep Mode
+  CID_DEV_SLEEP = 20;
+
+  // Re-init all components
+  CID_DEV_REINIT = 21;
+
+  // BLE Direct Test Mode (DTM) packets
+  CID_BLE_DTM_LE_TX = 248;
+  CID_BLE_DTM_LE_TX_RESP = 249;
+  CID_BLE_DTM_LE_RX = 250;
+  CID_BLE_DTM_LE_RX_RESP = 251;
+  CID_BLE_DTM_UNMODULATED_TX = 252;
+  CID_BLE_DTM_UNMODULATED_TX_RESP = 253;
+  CID_BLE_DTM_UNMODULATED_RX = 254;
+  CID_BLE_DTM_UNMODULATED_RX_RESP = 255;
+}
+
+enum ResponseCode {
+  RC_UNSPECIFIED = 0;
+  RC_OK = 1;
+  RC_ERROR_UNIMPLEMENTED = 2;
+  RC_ERROR_CMD_FAILED = 3;
+  RC_ERROR_TIMED_OUT = 4;
+  RC_ERROR_BUSY = 5;
+  RC_ERROR_INVALID_PACKET_TYPE = 6;
+  RC_ERROR_INVALID_PAYLOAD = 7;
+}
+
+enum NotificationId {
+  NID_UNSPECIFIED = 0;
+  NID_LOG_DATA = 1;
+  NID_CHARGING_STATUS_CHANGED = 2;
+  NID_BATTERY_LEVEL_CHANGED = 3;
+}
+
+enum AckResponseCode {
+  ACK_RC_UNSPECIFIED = 0;
+  ACK_RC_ACK = 1;
+  ACK_RC_NACK_UNIMPLEMENTED = 2;
+  ACK_RC_NACK_CMD_FAILED = 3;
+  ACK_RC_NACK_TIMED_OUT = 4;
+  ACK_RC_NACK_BUSY = 5;
+  ACK_RC_NACK_INVALID_PACKET_TYPE = 6;
+  ACK_RC_NACK_INVALID_PAYLOAD = 7;
+}
+
+message DevInfo {
+  /* Serial number.
+    Format: "BRG1-495452-AABBCC". Where:
+      - "495452" (ASCII is "ITR"): Company code.
+      - "AABBCC" is the last 3 bytes of BLE MAC address.
+  */
+  required string serial_number = 1;
+
+  // Hardware version. Format: "Major.Minor-[Prototype|Production]"
+  required string hardware_version = 2;
+
+  // Firmware version. Format: "Major.Minor.Patch.Build[-Suffix]"
+  required string firmware_version = 3;
+
+  // Model name. Currently, it is **"BR Gen 1"**
+  optional string model = 4;
+}
+
+message CmdMemSet {
+  required uint32 address = 1;
+  required uint32 length = 2;
+  required bytes data = 3;
+}
+
+message CmdMemGet {
+  required uint32 address = 1;
+  required uint32 length = 2;
+}
+
+message RspMemGet {
+  required bytes data = 1;
+}
+
+message NotiLog {
+  optional bytes data = 1;
+}
+
+message AfeSettings {
+  required uint32 ecg_sample_rate = 1;
+  required uint32 ppg_sample_rate = 2;
+  required uint32 ppg_meas1_current_step = 3;
+  required uint32 ppg_meas2_current_step = 4;
+  required float ppg_meas1_current = 5;
+  required float ppg_meas2_current = 6;
+}
+
+message WlcRunParams {
+  required uint32 charge_current = 1;
+  required uint32 recharge_voltage = 2;
+  required uint32 termination_voltage = 3;
+  required uint32 trickle_voltage = 4;
+  required uint32 enable_charging = 5;
+  required uint32 wpt_req = 6;
+  required uint32 wpt_duration = 7;
+  required uint32 detuning = 8;
+}
+
+message WlcOemParams {
+  required uint32 bc_i_charge_cold = 1;
+  required uint32 bc_i_charge_hot = 2;
+  required uint32 bc_v_term = 3;
+  required uint32 bc_v_term_cold = 4;
+  required uint32 bc_v_term_hot = 5;
+  required uint32 bc_v_trickle = 6;
+  required uint32 bc_v_recharge = 7;
+  required uint32 vd_mcu_mode = 8;
+  required uint32 i_sensor_thresh = 9;
+  required uint32 adj_wpt_duration_int = 10;
+  required uint32 tcm_wpt_duration_int = 11;
+  required uint32 ccm_wpt_duration_int = 12;
+  required uint32 cvm_wpt_duration_int = 13;
+  required uint32 cap_wt_int = 14;
+  required uint32 gpio0_config = 15;
+  required uint32 gpio1_config = 16;
+  required uint32 bc_uvlo_thresh = 17;
+  required uint32 wpt_req_sel = 18;
+  required uint32 irq_polarity = 19;
+  required uint32 nfc_resistive_mod = 20;
+  required uint32 nfc_resistive_set =  21;
+  required uint32 wpt_resistive_mod = 22;
+  required uint32 wpt_resistive_set = 23;
+  required uint32 ntc_mode = 24;
+  required uint32 bc_i_charge_wpt = 25;
+  required uint32 bc_i_charge_nfc = 26;
+  required uint32 bc_i_term = 27;
+  required uint32 bc_i_lim_sel = 28;
+  required uint32 bc_i_lim_bat_enable = 29;
+  required uint32 bc_lo_bat_off_en = 30;
+  required uint32 bc_enable = 31;
+  required uint32 i2c_address = 32;
+  required uint32 tcm_timeout = 33;
+  required uint32 ccm_timeout = 34;
+  required uint32 cvm_timeout = 35;
+  required uint32 vddc_thres_low = 36;
+  required uint32 vd_bat_offset_high = 37;
+  required uint32 vd_bat_offset_low = 38;
+  required uint32 dc_charging_enable = 39;
+}
+
+/* End of file -------------------------------------------------------------- */

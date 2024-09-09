@@ -1,6 +1,9 @@
+import com.google.protobuf.gradle.proto
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.protobuf")
 }
 
 android {
@@ -47,6 +50,14 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    sourceSets {
+        getByName("main") {
+            proto {
+                srcDir("src/main/java/com/example/composablelearning/blecore/proto")  // Directory where your .proto files are located
+            }
+        }
+    }
 }
 
 dependencies {
@@ -66,4 +77,24 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+//    implementation("com.google.protobuf:protobuf-javalite:3.21.6")
+    implementation("com.google.protobuf:protobuf-kotlin:3.21.6")
+    implementation("io.grpc:grpc-kotlin-stub:1.3.0")
+}
+
+protobuf {
+    protoc {
+        // Path to the protoc compiler
+        artifact = "com.google.protobuf:protoc:3.21.6"
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                create("kotlin") {
+//                    option("lite")  // Generate lite classes for Android
+                }
+            }
+        }
+    }
 }

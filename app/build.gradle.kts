@@ -78,9 +78,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-//    implementation("com.google.protobuf:protobuf-javalite:3.21.6")
-    implementation("com.google.protobuf:protobuf-kotlin:3.21.6")
-    implementation("io.grpc:grpc-kotlin-stub:1.3.0")
+    implementation("com.google.protobuf:protobuf-javalite:3.21.6")
 }
 
 protobuf {
@@ -88,11 +86,12 @@ protobuf {
         // Path to the protoc compiler
         artifact = "com.google.protobuf:protoc:3.21.6"
     }
+
     generateProtoTasks {
         all().forEach { task ->
             task.builtins {
-                create("kotlin") {
-//                    option("lite")  // Generate lite classes for Android
+                create("java") {
+                    option("lite")  // Generate lite classes for Android
                 }
             }
         }

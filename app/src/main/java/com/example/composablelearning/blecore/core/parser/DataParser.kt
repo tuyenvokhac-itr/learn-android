@@ -7,7 +7,8 @@ import com.example.composablelearning.blecore.utils.ByteUtils
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 
-class DataParser(private val handler: DeviceHandler, private val callBack: (Packet) -> Unit): Runnable {
+class DataParser(private val handler: DeviceHandler, private val callBack: (Packet) -> Unit) :
+    Runnable {
     private val buffer: BlockingQueue<ByteArray> = ArrayBlockingQueue(500)
 
     override fun run() {
@@ -27,7 +28,7 @@ class DataParser(private val handler: DeviceHandler, private val callBack: (Pack
 
     private fun parse(data: ByteArray) {
         val type = readType(data)
-        if(type != null) {
+        if (type != null) {
             val value = readValue(data)
             callBack(Packet(type, value))
         }
